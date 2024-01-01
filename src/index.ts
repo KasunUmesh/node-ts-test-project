@@ -7,21 +7,31 @@ const app = express();
 // @ts-ignore
 app.use(bodyParser.json());
 
+interface User {
+    username: string,
+    fname: string,
+    lname: string,
+    email: string,
+    password: string
+}
+
+let users: User[] = [];
+
 
 /**
  * Get All Users
  */
 app.get('/user/all', (req: express.Request, res: express.Response) => {
 
-    let data = {
-        _id: "U001",
-        username: "Pathum",
-        fname: "Pathum",
-        lname: "silva",
-        email: "pathum@example.com"
-    }
+    // let data = {
+    //     _id: "U001",
+    //     username: "Pathum",
+    //     fname: "Pathum",
+    //     lname: "silva",
+    //     email: "pathum@example.com"
+    // }
 
-    res.send(data);
+    res.send(users);
 })
 
 /**
@@ -31,6 +41,8 @@ app.post('/user', (req: express.Request, res: express.Response) => {
 
     const req_body: any = req.body;
     console.log(req_body)
+
+    users.push(req_body);
 
     res.send("OK");
 })
