@@ -8,7 +8,7 @@ interface Iuser extends mongoose.Document {
     password: string,
 }
 
-const userSchema = new mongoose.Schema({
+const userSchema = new mongoose.Schema<Iuser>({
     username: {type: String, required: true},
     fname: {type: String, required: true},
     lname: {type: String, required: true},
@@ -16,6 +16,6 @@ const userSchema = new mongoose.Schema({
     password: {type: String, required: true}
 })
 
-const UserModel = mongoose.model<Iuser>("user", userSchema);
+const UserModel = mongoose.model("user", userSchema);
 
 export default UserModel;

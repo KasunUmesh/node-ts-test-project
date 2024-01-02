@@ -33,6 +33,8 @@ db.on('open', () => {
 })
 
 
+// ----------------User ----------------
+
 /**
  * Get All Users
  */
@@ -113,6 +115,13 @@ app.post('/user/auth', async (req: express.Request, res: express.Response) => {
     } catch (error) {
         res.status(100).send("Error");
     }
+})
+
+
+// ---------------- Articles ----------------------
+
+app.post('/article', (req: express.Request, res: express.Response) => {
+
 })
 
 // Start the server
