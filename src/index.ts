@@ -2,6 +2,9 @@ import express from 'express';
 import bodyParser from "body-parser";
 import mongoose from "mongoose";
 
+import UserModel from "./models/user.model";
+import CustomResponse from "./dtos/custom.response";
+
 // invoke the express
 const app = express();
 
@@ -30,36 +33,96 @@ db.on('open', () => {
 })
 
 
+// ----------------User ----------------
+
 /**
  * Get All Users
  */
-app.get('/user/all', (req: express.Request, res: express.Response) => {
+app.get('/user/all', async (req: express.Request, res: express.Response) => {
 
-    // let data = {
-    //     _id: "U001",
-    //     username: "Pathum",
-    //     fname: "Pathum",
-    //     lname: "silva",
-    //     email: "pathum@example.com"
-    // }
+    try {
+        // This code Password not send Response
+        // let users = await UserModel.find({}, '-password');
 
-    res.send(users);
+        let users = await UserModel.find();
+
+        res.status(200).send(
+            new CustomResponse(200, "Users are found Successfully", users)
+        );
+    } catch (error) {
+        res.status(100).send("Error");
+    }
+
 })
 
 /**
  * Create New User
  */
-app.post('/user', (req: express.Request, res: express.Response) => {
+app.post('/user', async (req: express.Request, res: express.Response) => {
 
-    const req_body: any = req.body;
-    console.log(req_body)
+    try {
+        const req_body: any = req.body;
+        const userModel = new UserModel({
+            username: req_body.username,
+            fname: req_body.fname,
+            lname: req_body.lname,
+            email: req_body.email,
+            password: req_body.password
+        })
 
-    users.push(req_body);
+        let user = await userModel.save();
+        user.password = "";
+        res.status(200).send(
+            new CustomResponse(200, "Users Created Successfully", user)
+        );
 
-    res.send("OK");
+
+    } catch (error) {
+        res.status(100).send("Error");
+    }
+
+
 })
 
 
+/**
+ * Auth
+ */
+app.post('/user/auth', async (req: express.Request, res: express.Response) => {
+
+    try {
+        const request_body = req.body;
+
+        let user = await UserModel.findOne({email: request_body.email});
+        if (user) {
+            if (user.password === request_body.password) {
+                res.status(200).send(
+                    new CustomResponse(200, "Access", user)
+                );
+            } else {
+                res.status(401).send(
+                    new CustomResponse(401, "Invalid Credentials")
+                );
+            }
+
+        } else {
+            res.status(404).send(
+                new CustomResponse(404, "User not found")
+            );
+        }
+
+
+    } catch (error) {
+        res.status(100).send("Error");
+    }
+})
+
+
+// ---------------- Articles ----------------------
+
+app.post('/article', (req: express.Request, res: express.Response) => {
+
+})
 
 // Start the server
 app.listen(8081, () => {
