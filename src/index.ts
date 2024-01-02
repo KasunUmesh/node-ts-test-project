@@ -1,6 +1,6 @@
 import express from 'express';
 import bodyParser from "body-parser";
-import * as mongoose from "mongoose";
+import mongoose from "mongoose";
 
 // invoke the express
 const app = express();
