@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import bodyParser from "body-parser";
 import mongoose from "mongoose";
@@ -7,6 +10,7 @@ import UserModel from "./models/user.model";
 import ArticleModel from "./models/article.model";
 
 import CustomResponse from "./dtos/custom.response";
+import * as process from "process";
 
 // invoke the express
 const app = express();
@@ -22,9 +26,8 @@ interface User {
     password: string
 }
 
-let users: User[] = [];
 
-mongoose.connect("mongodb://localhost/blog")
+mongoose.connect(process.env.MONGO_URL as string)
 const db = mongoose.connection
 
 db.on('error', (error) => {
