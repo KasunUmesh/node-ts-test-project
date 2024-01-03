@@ -192,7 +192,7 @@ app.get('/articles/:username', async (req: express.Request, res: express.Respons
         } else {
             let articles = await ArticleModel.find({user: user._id}).limit(size).skip(size * (page - 1));
 
-            let documentCount = await ArticleModel.countDocuments();
+            let documentCount = await ArticleModel.countDocuments({user: user._id});
             let pageCount = Math.ceil(documentCount/size);
 
             res.status(200).send(
