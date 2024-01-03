@@ -1,8 +1,11 @@
 import express from 'express';
 import bodyParser from "body-parser";
 import mongoose from "mongoose";
+import {ObjectId} from "mongodb";
 
 import UserModel from "./models/user.model";
+import ArticleModel from "./models/article.model";
+
 import CustomResponse from "./dtos/custom.response";
 
 // invoke the express
@@ -120,9 +123,50 @@ app.post('/user/auth', async (req: express.Request, res: express.Response) => {
 
 // ---------------- Articles ----------------------
 
-app.post('/article', (req: express.Request, res: express.Response) => {
+app.post('/article', async (req: express.Request, res: express.Response) => {
 
+    try {
+        let req_body = req.body;
+
+        const articleModel = new ArticleModel({
+            title: req_body.title,
+            description: req_body.description,
+            user: new ObjectId(req_body.user)
+        })
+
+        await articleModel.save().then(r => {
+            res.status(200).send(
+                new CustomResponse(200, "Article Created successfully")
+            )
+
+        }).catch(e => {
+            res.status(100).send(
+                new CustomResponse(100, "Something went wrong")
+            )
+        });
+
+
+
+    } catch (error) {
+        res.status(100).send("Error");
+    }
 })
+
+app.get('/articles', async (req: express.Request, res: express.Response) => {
+
+    try {
+        let article = await ArticleModel.find();
+
+        res.status(200).send(
+            new CustomResponse(200, "Articles are found successfully", article)
+        )
+
+    } catch (error) {
+        res.status(100).send("Error");
+    }
+})
+
+
 
 // Start the server
 app.listen(8081, () => {
