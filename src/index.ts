@@ -1,9 +1,16 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import bodyParser from "body-parser";
 import mongoose from "mongoose";
+import {ObjectId} from "mongodb";
 
 import UserModel from "./models/user.model";
+import ArticleModel from "./models/article.model";
+
 import CustomResponse from "./dtos/custom.response";
+import * as process from "process";
 
 // invoke the express
 const app = express();
@@ -19,9 +26,8 @@ interface User {
     password: string
 }
 
-let users: User[] = [];
 
-mongoose.connect("mongodb://localhost/blog")
+mongoose.connect(process.env.MONGO_URL as string)
 const db = mongoose.connection
 
 db.on('error', (error) => {
@@ -120,8 +126,86 @@ app.post('/user/auth', async (req: express.Request, res: express.Response) => {
 
 // ---------------- Articles ----------------------
 
-app.post('/article', (req: express.Request, res: express.Response) => {
+app.post('/article', async (req: express.Request, res: express.Response) => {
 
+    try {
+        let req_body = req.body;
+
+        const articleModel = new ArticleModel({
+            title: req_body.title,
+            description: req_body.description,
+            user: new ObjectId(req_body.user)
+        })
+
+        await articleModel.save().then(r => {
+            res.status(200).send(
+                new CustomResponse(200, "Article Created successfully")
+            )
+
+        }).catch(e => {
+            res.status(100).send(
+                new CustomResponse(100, "Something went wrong")
+            )
+        });
+
+
+
+    } catch (error) {
+        res.status(100).send("Error");
+    }
+})
+
+app.get('/articles', async (req: express.Request, res: express.Response) => {
+
+    try {
+
+        let req_query: any = req.query;
+        let size: number = req_query.size;
+        let page: number = req_query.page;
+
+        let article = await ArticleModel.find().limit(size).skip(size * (page - 1));
+
+        let documentCount = await ArticleModel.countDocuments();
+        let pageCount = Math.ceil(documentCount/size);
+
+        res.status(200).send(
+            new CustomResponse(200, "Articles are found successfully", article, pageCount)
+        )
+
+    } catch (error) {
+        res.status(100).send("Error");
+    }
+})
+
+app.get('/articles/:username', async (req: express.Request, res: express.Response) => {
+    try {
+
+        let username: string = req.params.username;
+
+        let req_query: any = req.query;
+        let size: number = req_query.size;
+        let page: number = req_query.page;
+
+        let user = await UserModel.findOne({username: username});
+
+        if (!user) {
+            res.status(404).send(
+                new CustomResponse(404, "User not found")
+            )
+        } else {
+            let articles = await ArticleModel.find({user: user._id}).limit(size).skip(size * (page - 1));
+
+            let documentCount = await ArticleModel.countDocuments({user: user._id});
+            let pageCount = Math.ceil(documentCount/size);
+
+            res.status(200).send(
+                new CustomResponse(200, "Articles are found successfully", articles, pageCount)
+            )
+        }
+
+    } catch (error) {
+        res.status(100).send("Error");
+    }
 })
 
 // Start the server
