@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-interface Iuser extends mongoose.Document {
+export interface Iuser extends mongoose.Document {
     username: string,
     fname: string,
     lname: string,

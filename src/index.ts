@@ -8,7 +8,7 @@ import {ObjectId} from "mongodb";
 import * as process from "process";
 import jwt, {Secret} from 'jsonwebtoken';
 
-import UserModel from "./models/user.model";
+import UserModel, {Iuser} from "./models/user.model";
 import ArticleModel from "./models/article.model";
 
 import CustomResponse from "./dtos/custom.response";
@@ -78,12 +78,18 @@ app.post('/user', async (req: express.Request, res: express.Response) => {
             password: req_body.password
         })
 
-        let user = await userModel.save();
-        user.password = "";
-        res.status(200).send(
-            new CustomResponse(200, "Users Created Successfully", user)
-        );
+        let user: Iuser | null = await userModel.save();
 
+        if (user) {
+            user.password = "";
+            res.status(200).send(
+                new CustomResponse(200, "Users Created Successfully", user)
+            )
+        } else {
+            res.status(100).send(
+                new CustomResponse(100, "Something went wrong")
+            )
+        }
 
     } catch (error) {
         res.status(100).send("Error");
@@ -247,6 +253,29 @@ app.get('/articles/:username', async (req: express.Request, res: express.Respons
                 new CustomResponse(200, "Articles are found successfully", articles, pageCount)
             )
         }
+
+    } catch (error) {
+        res.status(100).send("Error");
+    }
+})
+
+app.get('/articles/get/my', verifyToken, async (req: express.Request, res: any) => {
+    try {
+
+        let req_query: any = req.query;
+        let size: number = req_query.size;
+        let page: number = req_query.page;
+
+        let user_id = res.tokenData.user._id
+
+        let articles = await ArticleModel.find({user: user_id}).limit(size).skip(size * (page - 1));
+
+        let documentCount = await ArticleModel.countDocuments({user: user_id});
+        let pageCount = Math.ceil(documentCount/size);
+
+        res.status(200).send(
+            new CustomResponse(200, "Articles are found successfully", articles, pageCount)
+        )
 
     } catch (error) {
         res.status(100).send("Error");
