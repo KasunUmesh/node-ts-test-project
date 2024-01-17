@@ -12,9 +12,9 @@ const router = express.Router();
 
 // ----------------User ----------------
 
-/**
- * Get All Users
- */
+
+// Get All Users
+
 router.get('/all', async (req: express.Request, res: express.Response) => {
 
     try {
@@ -32,9 +32,8 @@ router.get('/all', async (req: express.Request, res: express.Response) => {
 
 })
 
-/**
- * Create New User
- */
+
+// Create New User
 router.post('/', async (req: express.Request, res: express.Response) => {
 
     try {
@@ -68,9 +67,8 @@ router.post('/', async (req: express.Request, res: express.Response) => {
 })
 
 
-/**
- * Auth
- */
+
+// Auth
 router.post('/auth', async (req: express.Request, res: express.Response) => {
 
     try {
