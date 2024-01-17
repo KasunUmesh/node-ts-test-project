@@ -1,14 +1,8 @@
 import mongoose from "mongoose";
+import * as SchemaTypes from "../types/SchemaTypes";
 
-export interface Iuser extends mongoose.Document {
-    username: string,
-    fname: string,
-    lname: string,
-    email: string,
-    password: string,
-}
 
-const userSchema = new mongoose.Schema<Iuser>({
+const userSchema = new mongoose.Schema<SchemaTypes.Iuser>({
     username: {type: String, required: true},
     fname: {type: String, required: true},
     lname: {type: String, required: true},
