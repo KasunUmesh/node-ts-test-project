@@ -8,29 +8,13 @@ import UserModel from "../models/user.model";
 
 import CustomResponse from "../dtos/custom.response";
 
+import * as Middleware from "../middlewares";
+
 const router = express.Router();
 
 // ---------------- Articles ----------------------
 
-const verifyToken = (req: express.Request, res: any, next: express.NextFunction) => {
-
-    const token = req.headers.authorization;
-    // verify token
-
-    if (!token) {
-        return res.status(401).json('Invalid token')
-    }
-
-    try {
-        const data = jwt.verify(token, process.env.SECRET as Secret);
-        res.tokenData = data;
-        next();
-    } catch (error) {
-        return res.status(401).json('Invalid token')
-    }
-}
-
-router.post('/', verifyToken, async (req: express.Request, res: any) => {
+router.post('/', Middleware.verifyToken, async (req: express.Request, res: any) => {
 
     try {
         let req_body = req.body;
@@ -114,7 +98,7 @@ router.get('/:username', async (req: express.Request, res: express.Response) => 
     }
 })
 
-router.get('/get/my', verifyToken, async (req: express.Request, res: any) => {
+router.get('/get/my', Middleware.verifyToken, async (req: express.Request, res: any) => {
     try {
 
         let req_query: any = req.query;
@@ -137,7 +121,7 @@ router.get('/get/my', verifyToken, async (req: express.Request, res: any) => {
     }
 })
 
-router.put('/', verifyToken, async (req: express.Request, res: any) => {
+router.put('/', Middleware.verifyToken, async (req: express.Request, res: any) => {
     try {
 
         let req_body: any = req.body
@@ -172,7 +156,7 @@ router.put('/', verifyToken, async (req: express.Request, res: any) => {
     }
 })
 
-router.delete('/:id', verifyToken, async (req: express.Request, res: any)=> {
+router.delete('/:id', Middleware.verifyToken, async (req: express.Request, res: any)=> {
     try {
         let user_id = res.tokenData.user._id;
 
