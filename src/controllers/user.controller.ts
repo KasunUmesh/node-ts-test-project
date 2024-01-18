@@ -4,6 +4,7 @@ import CustomResponse from "../dtos/custom.response";
 import * as SchemaTypes from "../types/SchemaTypes";
 import jwt, {Secret} from "jsonwebtoken";
 import process from "process";
+import bcrypt from "bcryptjs";
 
 // get all user
 export const getAllUsers = async (req: express.Request, res: express.Response) => {
@@ -28,26 +29,38 @@ export const createNewUser = async (req: express.Request, res: express.Response)
 
     try {
         const req_body: any = req.body;
-        const userModel = new UserModel({
-            username: req_body.username,
-            fname: req_body.fname,
-            lname: req_body.lname,
-            email: req_body.email,
-            password: req_body.password
+
+        await bcrypt.hash(req_body.password, 8, async function (err, hash) {
+
+            if (err) {
+                res.status(100).send(
+                    new CustomResponse(100, "Something went wrong.")
+                )
+            }
+
+            const userModel = new UserModel({
+                username: req_body.username,
+                fname: req_body.fname,
+                lname: req_body.lname,
+                email: req_body.email,
+                password: hash
+            })
+
+            let user: SchemaTypes.Iuser | null = await userModel.save();
+
+            if (user) {
+                user.password = "";
+                res.status(200).send(
+                    new CustomResponse(200, "Users Created Successfully", user)
+                )
+            } else {
+                res.status(100).send(
+                    new CustomResponse(100, "Something went wrong")
+                )
+            }
         })
 
-        let user: SchemaTypes.Iuser | null = await userModel.save();
 
-        if (user) {
-            user.password = "";
-            res.status(200).send(
-                new CustomResponse(200, "Users Created Successfully", user)
-            )
-        } else {
-            res.status(100).send(
-                new CustomResponse(100, "Something went wrong")
-            )
-        }
 
     } catch (error) {
         res.status(100).send("Error");
@@ -63,8 +76,12 @@ export const authUser = async (req: express.Request, res: express.Response) => {
         const request_body = req.body;
 
         let user: SchemaTypes.Iuser | null = await UserModel.findOne({email: request_body.email});
+
         if (user) {
-            if (user.password === request_body.password) {
+
+            let isMatch = await bcrypt.compare(request_body.password, user.password)
+
+            if (isMatch) {
 
                 // Token generated
                 user.password = "";
