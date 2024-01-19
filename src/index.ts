@@ -10,8 +10,12 @@ import jwt, {Secret} from 'jsonwebtoken';
 
 import UserModel from "./models/user.model";
 import ArticleModel from "./models/article.model";
+import * as SchemaTypes from "./types/SchemaTypes";
 
 import CustomResponse from "./dtos/custom.response";
+
+import UserRoutes from "./routes/user.routes";
+import ArticleRoutes from "./routes/article.routes";
 
 
 // invoke the express
@@ -42,216 +46,11 @@ db.on('open', () => {
 
 
 // ----------------User ----------------
-
-/**
- * Get All Users
- */
-app.get('/user/all', async (req: express.Request, res: express.Response) => {
-
-    try {
-        // This code Password not send Response
-        // let users = await UserModel.find({}, '-password');
-
-        let users = await UserModel.find();
-
-        res.status(200).send(
-            new CustomResponse(200, "Users are found Successfully", users)
-        );
-    } catch (error) {
-        res.status(100).send("Error");
-    }
-
-})
-
-/**
- * Create New User
- */
-app.post('/user', async (req: express.Request, res: express.Response) => {
-
-    try {
-        const req_body: any = req.body;
-        const userModel = new UserModel({
-            username: req_body.username,
-            fname: req_body.fname,
-            lname: req_body.lname,
-            email: req_body.email,
-            password: req_body.password
-        })
-
-        let user = await userModel.save();
-        user.password = "";
-        res.status(200).send(
-            new CustomResponse(200, "Users Created Successfully", user)
-        );
-
-
-    } catch (error) {
-        res.status(100).send("Error");
-    }
-
-
-})
-
-
-/**
- * Auth
- */
-app.post('/user/auth', async (req: express.Request, res: express.Response) => {
-
-    try {
-        const request_body = req.body;
-
-        let user = await UserModel.findOne({email: request_body.email});
-        if (user) {
-            if (user.password === request_body.password) {
-
-                // Token generated
-                user.password = "";
-
-                const expiresIn = '1w';
-
-                jwt.sign({user}, process.env.SECRET as Secret, {expiresIn}, (err: any, token: any) => {
-                    if (err) {
-                        res.status(100).send(
-                            new CustomResponse(100, "Something went wrong")
-                        )
-
-                    } else {
-
-                        let res_body = {
-                            user: user,
-                            accessToken: token
-                        }
-
-                        res.status(200).send(
-                            new CustomResponse(200, "Access", res_body)
-                        )
-                    }
-                })
-
-
-            } else {
-                res.status(401).send(
-                    new CustomResponse(401, "Invalid Credentials")
-                );
-            }
-
-        } else {
-            res.status(404).send(
-                new CustomResponse(404, "User not found")
-            );
-        }
-
-
-    } catch (error) {
-        res.status(100).send("Error");
-    }
-})
-
+app.use('/user', UserRoutes)
 
 // ---------------- Articles ----------------------
+app.use('/article', ArticleRoutes)
 
-const verifyToken = (req: express.Request, res: any, next: express.NextFunction) => {
-
-    const token = req.headers.authorization;
-    // verify token
-
-    if (!token) {
-        return res.status(401).json('Invalid token')
-    }
-
-    try {
-        const data = jwt.verify(token, process.env.SECRET as Secret);
-        res.tokenData = data;
-        next();
-    } catch (error) {
-        return res.status(401).json('Invalid token')
-    }
-}
-
-app.post('/article', verifyToken, async (req: express.Request, res: any) => {
-
-    try {
-        let req_body = req.body;
-
-        let user_id = res.tokenData.user._id
-
-        const articleModel = new ArticleModel({
-            title: req_body.title,
-            description: req_body.description,
-            user: new ObjectId(user_id)
-        })
-
-        await articleModel.save().then(r => {
-            res.status(200).send(
-                new CustomResponse(200, "Article Created successfully")
-            )
-
-        }).catch(e => {
-            res.status(100).send(
-                new CustomResponse(100, "Something went wrong")
-            )
-        });
-
-
-
-    } catch (error) {
-        res.status(100).send("Error");
-    }
-})
-
-app.get('/articles', async (req: express.Request, res: express.Response) => {
-
-    try {
-
-        let req_query: any = req.query;
-        let size: number = req_query.size;
-        let page: number = req_query.page;
-
-        let article = await ArticleModel.find().limit(size).skip(size * (page - 1));
-
-        let documentCount = await ArticleModel.countDocuments();
-        let pageCount = Math.ceil(documentCount/size);
-
-        res.status(200).send(
-            new CustomResponse(200, "Articles are found successfully", article, pageCount)
-        )
-
-    } catch (error) {
-        res.status(100).send("Error");
-    }
-})
-
-app.get('/articles/:username', async (req: express.Request, res: express.Response) => {
-    try {
-
-        let username: string = req.params.username;
-
-        let req_query: any = req.query;
-        let size: number = req_query.size;
-        let page: number = req_query.page;
-
-        let user = await UserModel.findOne({username: username});
-
-        if (!user) {
-            res.status(404).send(
-                new CustomResponse(404, "User not found")
-            )
-        } else {
-            let articles = await ArticleModel.find({user: user._id}).limit(size).skip(size * (page - 1));
-
-            let documentCount = await ArticleModel.countDocuments({user: user._id});
-            let pageCount = Math.ceil(documentCount/size);
-
-            res.status(200).send(
-                new CustomResponse(200, "Articles are found successfully", articles, pageCount)
-            )
-        }
-
-    } catch (error) {
-        res.status(100).send("Error");
-    }
-})
 
 // Start the server
 app.listen(8081, () => {
