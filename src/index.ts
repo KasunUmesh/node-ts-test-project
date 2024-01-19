@@ -7,12 +7,8 @@ import mongoose from "mongoose";
 import {ObjectId} from "mongodb";
 import * as process from "process";
 import jwt, {Secret} from 'jsonwebtoken';
+import cors from "cors";
 
-import UserModel from "./models/user.model";
-import ArticleModel from "./models/article.model";
-import * as SchemaTypes from "./types/SchemaTypes";
-
-import CustomResponse from "./dtos/custom.response";
 
 import UserRoutes from "./routes/user.routes";
 import ArticleRoutes from "./routes/article.routes";
@@ -20,6 +16,10 @@ import ArticleRoutes from "./routes/article.routes";
 
 // invoke the express
 const app = express();
+
+app.use(cors({
+    origin: "*"
+}))
 
 // @ts-ignore
 app.use(bodyParser.json());
